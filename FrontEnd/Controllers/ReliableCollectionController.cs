@@ -8,6 +8,7 @@ using System.Net.Http;
 using Microsoft.Azure.Documents;
 using System.Fabric.Query;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace FrontEnd.Controllers
 {
@@ -46,7 +47,8 @@ namespace FrontEnd.Controllers
 
                 string stringResult = await response.Content.ReadAsStringAsync();
 
-                IEnumerable<User> result = JsonConvert.DeserializeObject<IEnumerable<User>>(stringResult);
+                var result = JObject.Parse(stringResult).ToObject<List<User>>();
+                //var result = JsonConvert.DeserializeObject<List<User>>(stringResult);
 
                 users.AddRange(result);
             }
@@ -56,9 +58,32 @@ namespace FrontEnd.Controllers
 
         // GET api/values/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
-            return "value";
+            ServicePartitionList partitionList = await _fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/SFPerfMonitoring/StatefulBackEnd"));
+
+            foreach (Partition partition in partitionList)
+            {
+                long partitionKey = ((Int64RangePartitionInformation)partition.PartitionInformation).LowKey;
+
+                string proxyUrl = $"http://localhost:{19081}/SFPerfMonitoring/StatefulBackEnd/api/users/{id}?PartitionKind={partition.PartitionInformation.Kind}&PartitionKey={partitionKey}";
+
+                HttpResponseMessage response = await _httpClient.GetAsync(proxyUrl);
+
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    // if one partition returns a failure, you can either fail the entire request or skip that partition.
+                    return this.StatusCode((int)response.StatusCode);
+                }
+
+                string stringResult = await response.Content.ReadAsStringAsync();
+
+                var result = JsonConvert.DeserializeObject<User>(stringResult);
+
+                return this.Json(result);
+            }
+
+            return null;
         }
 
         // POST api/values

@@ -47,7 +47,7 @@ namespace StatefulBackEnd.Controllers
                         }
                     }
                 }
-                return this.Json(result);
+                return this.Json(result.Select(x => x.Value));
             }
             catch (FabricException)
             {
