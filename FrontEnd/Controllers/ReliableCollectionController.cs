@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using System.Fabric;
-using System.Net.Http;
-using Microsoft.Azure.Documents;
-using System.Fabric.Query;
+﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Fabric;
+using System.Fabric.Query;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace FrontEnd.Controllers
 {
@@ -77,7 +74,7 @@ namespace FrontEnd.Controllers
 
                 string stringResult = await response.Content.ReadAsStringAsync();
 
-                var result = JsonConvert.DeserializeObject<User>(stringResult);
+                var result = JsonConvert.DeserializeObject<Models.User>(stringResult);
 
                 return this.Json(result);
             }
