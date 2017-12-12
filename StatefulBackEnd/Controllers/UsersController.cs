@@ -27,7 +27,7 @@ namespace StatefulBackEnd.Controllers
         {
             try
             {
-                List<KeyValuePair<long, User>> result = new List<KeyValuePair<long, User>>();
+                List<User> result = new List<User>();
 
                 ConditionalValue<IReliableDictionary<long, User>> tryGetResult =
                     await this.stateManager.TryGetAsync<IReliableDictionary<long, User>>(StatefulBackEnd.UsersDictionaryName);
@@ -43,11 +43,12 @@ namespace StatefulBackEnd.Controllers
 
                         while (await enumerator.MoveNextAsync(CancellationToken.None))
                         {
-                            result.Add(enumerator.Current);
+                            var user = enumerator.Current.Value;
+                            result.Add(user);
                         }
                     }
                 }
-                return this.Json(result);
+                return this.Ok(result);
             }
             catch (FabricException)
             {

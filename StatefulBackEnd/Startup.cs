@@ -15,7 +15,14 @@ namespace StatefulBackEnd
     {
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            IConfigurationBuilder builder = new ConfigurationBuilder()
+                .SetBasePath(configuration.GetValue<string>("contentRoot"))
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{configuration.GetValue<string>("environment")}.json", optional: true)
+                .AddInMemoryCollection(configuration.AsEnumerable())
+                .AddEnvironmentVariables();
+            this.Configuration = builder.Build();
+            //Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
@@ -23,7 +30,8 @@ namespace StatefulBackEnd
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddApplicationInsightsTelemetry("9395cd12-4756-4844-94a6-cda8d6ad032f");
+            //services.AddApplicationInsightsTelemetry("9395cd12-4756-4844-94a6-cda8d6ad032f");
+            services.AddApplicationInsightsTelemetry(this.Configuration);
             services.AddMvc();
         }
 

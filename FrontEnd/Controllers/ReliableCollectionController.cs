@@ -26,7 +26,7 @@ namespace FrontEnd.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            List<User> users = new List<User>();
+            List<Models.User> users = new List<Models.User>();
 
             ServicePartitionList partitionList = await _fabricClient.QueryManager.GetPartitionListAsync(new Uri("fabric:/SFPerfMonitoring/StatefulBackEnd"));
 
@@ -46,7 +46,7 @@ namespace FrontEnd.Controllers
 
                 string stringResult = await response.Content.ReadAsStringAsync();
 
-                IEnumerable<User> result = JsonConvert.DeserializeObject<IEnumerable<User>>(stringResult);
+                var result = JsonConvert.DeserializeObject<Models.User[]>(stringResult);
 
                 users.AddRange(result);
             }
