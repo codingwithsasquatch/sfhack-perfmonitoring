@@ -3,24 +3,50 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Documents.Client;
+using Models;
 
 namespace FrontEnd.Controllers
 {
     [Route("api/[controller]")]
     public class CosmosController : Controller
     {
+        private const string EndpointUri = "https://codeslingerstour.documents.azure.com:443/";
+        private const string PrimaryKey = "YoZqHb6KfBGcx3icWUyUMghSqd7gJpScL5N6QexlXEDNe4GIxhBfnbtZQl71r0WtJol7OUxiOK6MeudWwubRcg==";
+        private DocumentClient docClient;
+
+        public CosmosController()
+        {
+            docClient = new DocumentClient(new Uri(EndpointUri), PrimaryKey);
+        }
+
         // GET api/values
         [HttpGet]
-        public IEnumerable<string> Get()
+        public IEnumerable<User> Get()
         {
-            return new string[] { "value1", "value2" };
+            FeedOptions queryOptions = new FeedOptions { MaxItemCount = 1000 };
+
+            IQueryable<User> users = docClient.CreateDocumentQuery<User>(
+                UriFactory.CreateDocumentCollectionUri("sfhack-perfmonitoring", "users"),
+                "SELECT * FROM users",
+                queryOptions);
+
+            return users;
         }
 
         // GET api/values/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public User Get(int id)
         {
-            return "value";
+            FeedOptions queryOptions = new FeedOptions { MaxItemCount = 1 };
+            
+            User user = docClient.CreateDocumentQuery<User>(
+                UriFactory.CreateDocumentCollectionUri("sfhack-perfmonitoring", "users"),
+                $"SELECT * FROM users WHERE users.UserId = {id}")
+                .ToList()
+                .FirstOrDefault();
+
+            return user;
         }
 
         // POST api/values
