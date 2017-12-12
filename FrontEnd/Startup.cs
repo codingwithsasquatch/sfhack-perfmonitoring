@@ -23,6 +23,7 @@ namespace FrontEnd
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddApplicationInsightsTelemetry("9395cd12-4756-4844-94a6-cda8d6ad032f");
             services.AddMvc();
         }
 
