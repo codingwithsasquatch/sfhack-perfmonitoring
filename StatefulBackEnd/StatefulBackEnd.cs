@@ -11,6 +11,9 @@ using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using Microsoft.ServiceFabric.Data;
+using Microsoft.ServiceFabric.Data.Collections;
+using Models;
+using Newtonsoft.Json;
 
 namespace StatefulBackEnd
 {
@@ -19,6 +22,9 @@ namespace StatefulBackEnd
     /// </summary>
     internal sealed class StatefulBackEnd : StatefulService
     {
+        private static readonly Uri MockDataUri = new Uri("https://raw.githubusercontent.com/codingwithsasquatch/sfhack-perfmonitoring/master/MOCK_DATA.json");
+        public static readonly Uri UsersDictionaryName = new Uri("store:/users");
+
         public StatefulBackEnd(StatefulServiceContext context)
             : base(context)
         { }
@@ -49,6 +55,29 @@ namespace StatefulBackEnd
                                     .Build();
                     }))
             };
+        }
+
+        protected override async Task RunAsync(CancellationToken cancellationToken)
+        {
+            // Load User Data
+            string jsonString;
+            using (var webClient = new System.Net.WebClient())
+            {
+                jsonString = webClient.DownloadString(MockDataUri);
+            }
+            var userArray = JsonConvert.DeserializeObject<User[]>(jsonString);
+
+            var userDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<long, User>>(UsersDictionaryName);
+
+            using (var tx = this.StateManager.CreateTransaction())
+            {
+                foreach (var user in userArray)
+                {
+                    await userDictionary.AddOrUpdateAsync(tx, user.UserId, user, (key, value) => value);
+                }
+
+                await tx.CommitAsync();
+            }
         }
     }
 }
